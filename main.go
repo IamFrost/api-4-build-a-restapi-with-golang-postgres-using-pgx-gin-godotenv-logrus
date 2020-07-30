@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -10,12 +12,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
-
-
-
-
-
-
 
 var logrusLog = logrus.New()
 
@@ -43,12 +39,6 @@ func createConnection() *pgxpool.Pool {
 	}
 	return dbpool
 }
-
-
-
-
-
-
 
 // Usersec struct (Model)
 type Usersec struct {
@@ -181,11 +171,6 @@ func CreateOneUsersec(c *gin.Context) {
 		logrus.Debugf("From CreateOneUsersec :  %v", result)
 	}
 }
-
-
-
-
-
 
 // Login struct (Model)
 type Login struct {
@@ -354,11 +339,6 @@ func CreateLogin(c *gin.Context) {
 	}
 }
 
-
-
-
-
-
 // Purchase struct (Model)
 type Purchase struct {
 	ID       string `json:"item_id"`
@@ -387,16 +367,27 @@ func GetPurchases(c *gin.Context) {
 	} else {
 		defer rows.Close()
 
-		var id string
+		var id int64
 		var name string
-		var quantity string
-		var rate string
-		var date string
+		var quantity float64
+		var rate float64
+		var date time.Time
 
 		allPurchases = nil
 		for rows.Next() {
 			rows.Scan(&id, &name, &quantity, &rate, &date)
-			allPurchases = append(allPurchases, Purchase{ID: id, Name: name, Quantity: quantity, Rate: rate, Date: date})
+
+			idConv := fmt.Sprintf("%d", id)
+			quantityConv := fmt.Sprintf("%.2f", quantity)
+			rateConv := fmt.Sprintf("%.2f", rate)
+			dateConv := fmt.Sprintf("%d-%02d-%02d", date.Year(), date.Month(), date.Day())
+
+			// fmt.Println(idConv)
+			// fmt.Println(quantityConv)
+			// fmt.Println(rateConv)
+			// fmt.Println(dateConv)
+
+			allPurchases = append(allPurchases, Purchase{ID: idConv, Name: name, Quantity: quantityConv, Rate: rateConv, Date: dateConv})
 		}
 
 		if rows.Err() != nil {
@@ -425,16 +416,22 @@ func GetPurchase(c *gin.Context) {
 	} else {
 		defer rows.Close()
 
-		var id string
+		var id int64
 		var name string
-		var quantity string
-		var rate string
-		var date string
+		var quantity float64
+		var rate float64
+		var date time.Time
 
 		allPurchases = nil
 		for rows.Next() {
 			rows.Scan(&id, &name, &quantity, &rate, &date)
-			allPurchases = append(allPurchases, Purchase{ID: id, Name: name, Quantity: quantity, Rate: rate, Date: date})
+
+			idConv := fmt.Sprintf("%d", id)
+			quantityConv := fmt.Sprintf("%.2f", quantity)
+			rateConv := fmt.Sprintf("%.2f", rate)
+			dateConv := fmt.Sprintf("%d-%02d-%02d", date.Year(), date.Month(), date.Day())
+			
+			allPurchases = append(allPurchases, Purchase{ID: idConv, Name: name, Quantity: quantityConv, Rate: rateConv, Date: dateConv})
 		}
 
 		if rows.Err() != nil {
@@ -525,23 +522,13 @@ func UpdatePurchase(c *gin.Context) {
 	}
 }
 
-
-
-
 func main() {
 	router := gin.Default()
-
-
 
 	router.GET("/usersec", GetAllUsersec)
 	router.GET("/usersec/:userid", GetOneUsersec)
 	router.DELETE("/usersec/:userid", DeleteOneUsersecAllAccess)
 	router.POST("/usersec", CreateOneUsersec)
-
-
-
-
-
 
 	router.GET("/logins", GetLogins)
 	router.GET("/logins/username/:username", GetLoginUsername)
@@ -549,20 +536,11 @@ func main() {
 	router.DELETE("/logins/username/:username", DeleteLoginUsername)
 	router.POST("/logins", CreateLogin)
 
-
-
-
-
 	router.GET("/purchases", GetPurchases)
 	router.GET("/purchases/:id", GetPurchase)
 	router.DELETE("/purchases/:id", DeletePurchase)
 	router.PUT("/purchases/:id", UpdatePurchase)
 	router.POST("/purchases", CreatePurchase)
-
-
-
-
-
 
 	router.Use(cors.Default())
 	router.Run(":" + goDotEnvVariable("API_PORT"))
