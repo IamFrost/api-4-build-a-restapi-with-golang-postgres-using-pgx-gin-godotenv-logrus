@@ -304,6 +304,27 @@ func GetLoginEmail(c *gin.Context) {
 	}
 }
 
+// DeleteLoginUsername delete single login by username
+func DeleteLoginUsername(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Content-Type", "application/json")
+
+	dbpool := createConnection()
+	defer dbpool.Close()
+
+	usernameFromRouter := c.Param("username")
+
+	myQuery := `DELETE FROM logins WHERE username=$1`
+
+	result, err := dbpool.Exec(c, myQuery, usernameFromRouter)
+	if err != nil {
+		panic(err)
+	} else {
+		logrus.Debugf("From DeleteLoginUsername :  %v", result)
+	}
+
+}
+
 // CreateLogin Adds new login
 func CreateLogin(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
@@ -525,6 +546,7 @@ func main() {
 	router.GET("/logins", GetLogins)
 	router.GET("/logins/username/:username", GetLoginUsername)
 	router.GET("/logins/email/:email", GetLoginEmail)
+	router.DELETE("/logins/username/:username", DeleteLoginUsername)
 	router.POST("/logins", CreateLogin)
 
 
